@@ -1,0 +1,85 @@
+[tool.poetry]
+name = "water-my-plant"
+version = "0.1.0"
+description = "water-my-plant service"
+authors = []
+packages = [{ include = "water_my_plant", from = "src" }]
+
+[tool.poetry.dependencies]
+python = "3.13.0"
+fastapi = "^0.109.2"
+uvicorn = "^0.27.1"
+sqlalchemy = "^2.0.27"
+psycopg2-binary = "^2.9.9"
+pydantic = "^2.6.1"
+pydantic-settings = "^2.1.0"
+python-jose = {extras = ["cryptography"], version = "^3.3.0"}
+passlib = {extras = ["bcrypt"], version = "1.7.4"}
+bcrypt = "4.0.1"
+python-multipart = "^0.0.9"
+alembic = "^1.13.1"
+
+
+[tool.poetry.dev-dependencies]
+mypy = "~1.5.1" # pinned since issues for MVM with higher versions
+pytest = "~7.4.2"
+pytest-asyncio = "~0.21.1"
+pytest-cov = "^5.0.0"
+mutmut = "^2.5.0"
+pytest-xdist = "^3.6.1"
+polyfactory = "^2.21.0"
+
+
+[tool.poetry.group.test.dependencies]
+pytest-cov = "^5.0.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.viz-ci]
+poetry-version="1.7.1"
+
+[tool.black]
+line-length = 119
+target-version = ["py311"]
+
+[tool.isort]
+line_length = 119
+profile = "black"
+skip_glob = ["*html*", "*__init__.py*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+minversion = "7.0"
+testpaths = ["tests"]
+pythonpath = ["src", ".", "tests"]
+filterwarnings = [
+    "ignore:Call to deprecated create function Descriptor()",
+    "ignore:Call to deprecated create function FieldDescriptor()",
+    "ignore:Call to deprecated create function FileDescriptor()",
+    "ignore:Call to deprecated create function OneofDescriptor()"
+]
+
+[tool.mypy]
+exclude = ["config/", "tests/load"]
+allow_subclassing_any = true        # Imported 3rd party base classes are usually considered Any.
+ignore_missing_imports = true       # Almost all 3rd party package imports have no type hints.
+install_types = true
+non_interactive = true
+show_error_codes = true
+strict = true
+warn_unreachable = true
+warn_unused_ignores = false
+plugins = ["pydantic.mypy"]
+
+[tool.vulture]
+exclude = [".venv"]
+min_confidence = 90
+
+[tool.mutmut]
+paths_to_mutate="src/"                        # comma-separated list of paths to code
+runner="poetry run pytest tests/unit/ -n 4"   # shell command to run tests using 4 processors
+tests_dir="tests/unit/"                       # comma-separated list of test directories
+disable_mutation_types="fstring,string"
+

@@ -1,0 +1,10 @@
+[
+  {
+    "id": "string",
+    "name": "string",
+    "type": "string",
+    "description": "string",
+    "userId": "string"
+  }
+  // ... more plants
+]
