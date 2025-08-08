@@ -41,7 +41,7 @@ class PlantListViewModel @Inject constructor(
                         plants.forEach { plant ->
                             plantRepository.getLastWateringEvent(plant.id.toString()).collect { eventResult ->
                                 eventResult.onSuccess { event ->
-                                    val lastWatered = event?.wateredAt ?: plant.lastWatered ?: Instant.EPOCH
+                                    val lastWatered = event?.wateredAt ?: plant.lastWatered ?: null
                                     plantsWithLastWatered.add(PlantWithLastWatered(plant, lastWatered))
                                 }.onFailure { exception ->
                                     // If no watering event, use plant's lastWatered
