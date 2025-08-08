@@ -54,7 +54,7 @@ def get_last_watering(
     last_event = get_last_watering_event(db, plant_id, current_user.id)
     if not last_event:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=status.HTTP_204_NO_CONTENT,
             detail="Plant not found or no watering events recorded"
         )
     return last_event
