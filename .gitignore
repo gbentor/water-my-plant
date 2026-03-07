@@ -1,0 +1,11 @@
+server/.idea/*
+server/src/water_my_plant/__pycache__/*
+server/.idea/
+
+server/src/water_my_plant/http_handlers/__pycache__/
+
+WaterMyPlant/.idea/
+
+server/src/water_my_plant/__pycache__/
+
+WaterMyPlant/app/release/

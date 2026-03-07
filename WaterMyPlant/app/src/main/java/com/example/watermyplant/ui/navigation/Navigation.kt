@@ -1,9 +1,6 @@
 package com.example.watermyplant.ui.navigation
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -13,6 +10,7 @@ import com.example.watermyplant.ui.screens.plants.PlantListScreen
 import com.example.watermyplant.ui.screens.plants.PlantDetailScreen
 import com.example.watermyplant.ui.screens.plants.AddPlantScreen
 import com.example.watermyplant.ui.screens.plants.EditPlantScreen
+import com.example.watermyplant.ui.screens.plants.DeletePlantScreen
 
 sealed class Screen(val route: String) {
     object Login : Screen("login")
@@ -24,6 +22,9 @@ sealed class Screen(val route: String) {
     object AddPlant : Screen("add_plant")
     object EditPlant : Screen("edit_plant/{plantId}") {
         fun createRoute(plantId: String) = "edit_plant/$plantId"
+    }
+    object DeletePlant : Screen("delete_plant/{plantId}") {
+        fun createRoute(plantId: String) = "delete_plant/$plantId"
     }
 }
 
@@ -88,6 +89,9 @@ fun AppNavigation(
                 onEditClick = { plantId ->
                     navController.navigate(Screen.EditPlant.createRoute(plantId))
                 },
+                onDeleteClick = { plantId ->
+                    navController.navigate(Screen.DeletePlant.createRoute(plantId))
+                },
                 onBackClick = {
                     navController.popBackStack()
                 }
@@ -110,6 +114,19 @@ fun AppNavigation(
             EditPlantScreen(
                 plantId = plantId,
                 onEditClick = { plantId ->
+                    navController.popBackStack()
+                },
+                onBackClick = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Screen.DeletePlant.route) { backStackEntry ->
+            val plantId = backStackEntry.arguments?.getString("plantId") ?: return@composable
+            DeletePlantScreen(
+                plantId = plantId,
+                onDeleteClick = { plantId ->
                     navController.popBackStack()
                 },
                 onBackClick = {

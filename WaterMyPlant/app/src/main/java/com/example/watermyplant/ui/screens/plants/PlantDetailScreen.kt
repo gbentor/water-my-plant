@@ -35,6 +35,7 @@ import java.time.temporal.ChronoUnit
 fun PlantDetailScreen(
     plantId: String,
     onEditClick: (String) -> Unit,
+    onDeleteClick: (String) -> Unit,
     onBackClick: () -> Unit,
     viewModel: PlantDetailViewModel = hiltViewModel()
 ) {
@@ -73,6 +74,9 @@ fun PlantDetailScreen(
                 actions = {
                     IconButton(onClick = { plant?.id?.let { onEditClick(it.toString()) } }) {
                         Icon(Icons.Default.Edit, contentDescription = "Edit Plant")
+                    };
+                    IconButton(onClick = { plant?.id?.let { onDeleteClick(it.toString()) } }) {
+                        Icon(Icons.Default.Delete, contentDescription = "Delete Plant")
                     }
                 }
             )

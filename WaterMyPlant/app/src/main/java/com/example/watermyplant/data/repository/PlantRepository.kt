@@ -120,25 +120,16 @@ class PlantRepository @Inject constructor(
     }
 
     fun getLastWateringEvent(plantId: String): Flow<Result<WateringEvent?>> = flow {
-        try {
-            val response = apiService.getLastWateringEvent(plantId)
-            when {
-                response.isSuccessful -> {
-                    response.body()?.let { event ->
-                        emit(Result.success(event))
-                    } ?: emit(Result.success(null))
-                }
-                response.code() == 204 -> {
-                    // Server explicitly returned 'No Content' — treat as a valid null response
-                    emit(Result.success(null))
-                }
-                else -> {
-                    emit(Result.failure(Exception("Error: ${response.code()}")))
+        emit(
+            runCatching {
+                val response = apiService.getLastWateringEvent(plantId)
+                when {
+                    response.isSuccessful -> response.body()
+                    response.code() == 204 -> null
+                    else -> throw Exception("Error: ${response.code()}")
                 }
             }
-        } catch (e: Exception) {
-            emit(Result.failure(e))
-        }
+        )
     }
 
     fun recordWateringEvent(request: WateringEventCreateRequest): Flow<Result<WateringEvent>> = flow {
