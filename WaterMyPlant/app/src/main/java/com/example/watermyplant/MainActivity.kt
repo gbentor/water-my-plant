@@ -19,6 +19,7 @@ import com.example.watermyplant.ui.screens.auth.LoginScreen
 import com.example.watermyplant.ui.screens.auth.RegisterScreen
 import com.example.watermyplant.ui.screens.plants.AddPlantScreen
 import com.example.watermyplant.ui.screens.plants.EditPlantScreen
+import com.example.watermyplant.ui.screens.plants.DeletePlantScreen
 import com.example.watermyplant.ui.screens.plants.PlantDetailScreen
 import com.example.watermyplant.ui.screens.plants.PlantListScreen
 import com.example.watermyplant.ui.theme.WaterMyPlantTheme
@@ -101,6 +102,9 @@ fun WaterMyPlantNavigation() {
                 onEditClick = { plantId ->
                     navController.navigate("editPlant/$plantId")
                 },
+                onDeleteClick = { plantId ->
+                    navController.navigate("deletePlant/$plantId")
+                },
                 onBackClick = {
                     navController.popBackStack()
                 }
@@ -122,6 +126,18 @@ fun WaterMyPlantNavigation() {
                 plantId = plantId,
                 onEditClick = { plantId ->
                     navController.navigate("editPlant/$plantId")
+                },
+                onBackClick = {
+                    navController.popBackStack()
+                }
+            )
+        }
+        composable("deletePlant/{plantId}") { backStackEntry ->
+            val plantId = backStackEntry.arguments?.getString("plantId") ?: return@composable
+            DeletePlantScreen(
+                plantId = plantId,
+                onDeleteClick = { plantId ->
+                    navController.navigate("plantList")
                 },
                 onBackClick = {
                     navController.popBackStack()
