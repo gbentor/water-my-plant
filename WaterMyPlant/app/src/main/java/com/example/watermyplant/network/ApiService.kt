@@ -13,7 +13,7 @@ interface ApiService {
 
     companion object {
         const val BASE_URL =
-            "http:/localhost:8000" // Replace with your actual deployed backend URL
+            "https://apneustic-casen-redundant.ngrok-free.dev" // Replace with your actual deployed backend URL
         // Example: "http://10.0.2.2:8000/" if running backend locally and testing on Android Emulator
         // Example: "https://your-app-name.onrender.com/" if deployed
     }

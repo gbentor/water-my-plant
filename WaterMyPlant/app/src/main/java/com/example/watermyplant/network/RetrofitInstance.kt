@@ -15,7 +15,8 @@ import java.time.Instant
 class RetrofitInstance @Inject constructor(
     private val authInterceptor: AuthInterceptor
 ) {
-    private val BASE_URL = "http://10.100.102.7:8000"
+//    private val BASE_URL = "http://10.100.102.7:8000"
+    private val BASE_URL = "https://apneustic-casen-redundant.ngrok-free.dev"
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
