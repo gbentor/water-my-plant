@@ -2,14 +2,15 @@ package com.example.watermyplant.ui.screens.plants
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.watermyplant.data.model.Plant
 import com.example.watermyplant.data.model.PlantWithLastWatered
 import com.example.watermyplant.data.repository.AuthRepository
 import com.example.watermyplant.data.repository.PlantRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import java.time.Instant
 import javax.inject.Inject
 
 sealed class PlantListUiState {
@@ -32,24 +33,30 @@ class PlantListViewModel @Inject constructor(
 
     fun loadPlants() {
         viewModelScope.launch {
-            _uiState.value = PlantListUiState.Loading
-            _error.value = null
             try {
                 plantRepository.getAllPlants().collect { result ->
                     result.onSuccess { plants ->
-                        val plantsWithLastWatered = mutableListOf<PlantWithLastWatered>()
-                        plants.forEach { plant ->
-                            plantRepository.getLastWateringEvent(plant.id.toString()).collect { eventResult ->
-                                eventResult.onSuccess { event ->
-                                    val lastWatered = event?.wateredAt ?: plant.lastWatered ?: null
-                                    plantsWithLastWatered.add(PlantWithLastWatered(plant, lastWatered))
-                                }.onFailure { exception ->
-                                    // If no watering event, use plant's lastWatered
-                                    plantsWithLastWatered.add(PlantWithLastWatered(plant, plant.lastWatered))
+                        coroutineScope {
+                            // Launch async requests in parallel for each plant
+                            val deferredResults = plants.map { plant ->
+                                async {
+                                    val eventResult =
+                                        plantRepository.getLastWateringEvent(plant.id.toString())
+                                            .first()
+                                    val lastWatered =
+                                        eventResult.getOrNull()?.wateredAt ?: plant.lastWatered
+                                    PlantWithLastWatered(
+                                        plant = plant,
+                                        lastWatered = lastWatered
+                                    )
                                 }
                             }
+
+                            // Await all parallel jobs and build the final list
+                            val plantsWithLastWatered = deferredResults.awaitAll()
+
+                            _uiState.value = PlantListUiState.Success(plantsWithLastWatered)
                         }
-                        _uiState.value = PlantListUiState.Success(plantsWithLastWatered)
                     }.onFailure { exception ->
                         _uiState.value = PlantListUiState.Error
                         _error.value = exception.message ?: "Failed to load plants"
@@ -57,7 +64,7 @@ class PlantListViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 _uiState.value = PlantListUiState.Error
-                _error.value = e.message ?: "An unexpected error occurred"
+                _error.value = e.message ?: "Unknown error"
             }
         }
     }
