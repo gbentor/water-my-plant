@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "water-my-plant service"
 authors = []
 packages = [{ include = "water_my_plant", from = "src" }]
+package-mode = true
 
 [tool.poetry.dependencies]
 python = "3.13.0"
@@ -29,7 +30,7 @@ pytest-asyncio = "~0.21.1"
 pytest-cov = "^5.0.0"
 mutmut = "^2.5.0"
 pytest-xdist = "^3.6.1"
-polyfactory = "^2.21.0"
+polyfactory = "*"
 
 
 [tool.poetry.group.test.dependencies]
