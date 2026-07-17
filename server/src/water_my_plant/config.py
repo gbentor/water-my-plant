@@ -1,10 +1,14 @@
+import os
+
 from pydantic_settings import BaseSettings
 from typing import Optional
 
 
+DB_PASSWORD = os.getenv("db_password")
+
 class Settings(BaseSettings):
     # Database settings
-    DATABASE_URL: str = "postgresql://postgres:password@127.0.0.1:5432/water_my_plant"
+    DATABASE_URL: str = f"postgresql://postgres.bewdkxqpgndjplvfqjha:{DB_PASSWORD}@aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres"
 
     # JWT settings
     SECRET_KEY: str = "your-secret-key-here"  # Change this in production
