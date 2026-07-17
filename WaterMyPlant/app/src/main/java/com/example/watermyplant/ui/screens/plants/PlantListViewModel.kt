@@ -1,10 +1,12 @@
 package com.example.watermyplant.ui.screens.plants
 
+import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.watermyplant.data.model.PlantWithLastWatered
 import com.example.watermyplant.data.repository.AuthRepository
 import com.example.watermyplant.data.repository.PlantRepository
+import com.example.watermyplant.data.repository.SensorRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -22,7 +24,8 @@ sealed class PlantListUiState {
 @HiltViewModel
 class PlantListViewModel @Inject constructor(
     private val plantRepository: PlantRepository,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val sensorsRepository: SensorRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<PlantListUiState>(PlantListUiState.Loading)
@@ -45,9 +48,20 @@ class PlantListViewModel @Inject constructor(
                                             .first()
                                     val lastWatered =
                                         eventResult.getOrNull()?.wateredAt ?: plant.lastWatered
+                                    var currentMoisture: Double? = null
+                                    if (plant.sensorId != null) {
+                                        sensorsRepository.getSensorMoistureData(
+                                            plant.sensorId
+                                        ).collect { result ->
+                                            result.onSuccess { moistureData ->
+                                                currentMoisture = moistureData.moisture.lastOrNull()
+                                            }
+                                        }
+                                    }
                                     PlantWithLastWatered(
                                         plant = plant,
-                                        lastWatered = lastWatered
+                                        lastWatered = lastWatered,
+                                        currentMoisture = currentMoisture
                                     )
                                 }
                             }

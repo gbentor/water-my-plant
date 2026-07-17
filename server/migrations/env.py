@@ -5,7 +5,7 @@ from sqlalchemy import engine_from_config, pool
 
 from water_my_plant.config import settings
 from water_my_plant.dal.base import Base
-from water_my_plant.dal.models import User, Plant, WateringEvent  # Import all models
+from water_my_plant.dal.models import User, Plant, WateringEvent, Sensor  # Import all models
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

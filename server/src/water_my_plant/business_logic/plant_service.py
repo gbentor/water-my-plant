@@ -1,9 +1,11 @@
-from typing import List, Optional
+from typing import List, Optional, Type
 from uuid import uuid4
 
 from sqlalchemy.orm import Session
 
 from water_my_plant.application.models import PlantCreate, PlantUpdate
+from water_my_plant.dal.cache_service import clear_sensor_moisture_cache
+from water_my_plant.dal.db_service import get_single_sensor
 from water_my_plant.dal.models import Plant, User
 
 
@@ -38,7 +40,7 @@ def get_plant_by_id(db: Session, plant_id: str, owner_id: str) -> Optional[Plant
     ).first()
 
 
-def get_user_plants(db: Session, owner_id: str) -> List[Plant]:
+def get_user_plants(db: Session, owner_id: str) -> List[Type[Plant]]:
     """Get all plants for a user."""
     return db.query(Plant).filter(Plant.owner_id == owner_id).all()
 
@@ -52,11 +54,20 @@ def update_plant(db: Session, plant_id: str, plant_update: PlantUpdate, owner_id
     
     if not db_plant:
         return None
-    
+
     update_data = plant_update.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(db_plant, field, value)
-    
+
+    if plant_update.sensor_name is not None:
+        if plant_update.sensor_name != "Remove Sensor":
+            # clear new sensor moisture cache
+            sensor = get_single_sensor(db, owner_id=owner_id, sensor_name=plant_update.sensor_name)
+            clear_sensor_moisture_cache(f"{sensor.mac_address}-{sensor.sensor_hardware_id}")
+            db_plant.sensor_id = sensor.id
+        else:
+            db_plant.sensor_id = None
+
     db.commit()
     db.refresh(db_plant)
     return db_plant

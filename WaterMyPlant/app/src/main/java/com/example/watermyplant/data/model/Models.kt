@@ -23,6 +23,8 @@ data class Plant(
     val name: String,
     val type: String,
     val description: String?,
+    @SerializedName("sensor_id")
+    val sensorId: String?,
     @SerializedName("last_watered")
     val lastWatered: Instant?,
     @SerializedName("owner_id")
@@ -44,7 +46,9 @@ data class PlantUpdateRequest(
     val type: String? = null,
     val description: String? = null,
     @SerializedName("last_watered")
-    val lastWatered: Instant? = null
+    val lastWatered: Instant? = null,
+    @SerializedName("sensor_name")
+    val sensorName: String? = null
 )
 
 data class WateringEvent(
@@ -97,5 +101,49 @@ data class RegistrationRequest(
 
 data class PlantWithLastWatered(
     val plant: Plant,
-    val lastWatered: Instant?
-) 
+    val lastWatered: Instant?,
+    val currentMoisture: Double?
+)
+
+data class RegisterSensorRequest(
+    @SerializedName("sensor_hardware_id")
+    val sensorId: String,
+    @SerializedName("sensor_name")
+    val sensorName: String,
+    @SerializedName("board_mac_address")
+    val boardMacAddress: String,
+    @SerializedName("type")
+    val sensorType: String = "moisture"
+)
+
+data class RegisterBoardRequest(
+    @SerializedName("mac_address")
+    val macAddress: String,
+    @SerializedName("board_name")
+    val boardName: String,
+)
+
+data class Sensor(
+    @SerializedName("sensor_name")
+    val sensorName: String,
+    @SerializedName("sensor_id")
+    val sensorId: String,
+    @SerializedName("type")
+    val sensorType: String = "moisture",
+    @SerializedName("used_by")
+    val usedBy: String = "",
+)
+
+
+data class Board(
+    @SerializedName("mac_address")
+    val macAddress: String,
+    @SerializedName("board_name")
+    val boardName: String,
+)
+
+data class MoistureData(
+    @SerializedName("sensor_id")
+    val sensorId: String,
+    val moisture: List<Double>,
+)

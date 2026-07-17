@@ -9,9 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.watermyplant.ui.components.AppButton
-import com.example.watermyplant.ui.components.AppTextField
-import com.example.watermyplant.ui.components.ErrorMessage
+import com.example.watermyplant.data.model.Sensor
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -21,11 +19,16 @@ fun EditPlantScreen(
     onBackClick: () -> Unit,
     viewModel: EditPlantViewModel = hiltViewModel()
 ) {
+    val plant by viewModel.plant.collectAsState()
     var name by remember { mutableStateOf("") }
     var type by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
+    var expanded by remember { mutableStateOf(false) }
+    val sensors by viewModel.sensors.collectAsState(initial = emptyList())
+    var selectedSensor by remember { mutableStateOf<Sensor?>(null) }
+
 
     val editSuccess by viewModel.editSuccess.collectAsState()
 
@@ -43,7 +46,7 @@ fun EditPlantScreen(
 
     LaunchedEffect(editSuccess) {
         if (editSuccess) {
-            onEditClick(plantId)
+            onBackClick()
         }
     }
 
@@ -69,24 +72,83 @@ fun EditPlantScreen(
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("Plant Name") },
+                label = { Text(plant?.name ?: "Plant Name") },
                 modifier = Modifier.fillMaxWidth()
             )
 
             OutlinedTextField(
                 value = type,
                 onValueChange = { type = it },
-                label = { Text("Type") },
+                label = { Text(plant?.type ?: "Plant Type") },
                 modifier = Modifier.fillMaxWidth()
             )
 
             OutlinedTextField(
                 value = description,
                 onValueChange = { description = it },
-                label = { Text("Description (Optional)") },
+                label = { Text(plant?.description ?: "Plant Description") },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 3
             )
+
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = { expanded = !expanded },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                OutlinedTextField(
+                    // Display the sensorName or an empty string if nothing is selected
+                    value = selectedSensor?.sensorName ?: "",
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Select Sensor") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth()
+                )
+
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    sensors.forEach { sensor ->
+                        // Check if the sensor is already in use
+                        val isUsed = !sensor.usedBy.isNullOrBlank()
+
+                        DropdownMenuItem(
+                            text = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = sensor.sensorName,
+                                        // If used, we dim the main text slightly
+                                        color = if (isUsed) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                                        else MaterialTheme.colorScheme.onSurface
+                                    )
+                                    if (isUsed) {
+                                        Text(
+                                            text = " (${sensor.usedBy})",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.outline // Grayish color
+                                        )
+                                    }
+                                }
+                            },
+                            onClick = {
+                                // Only allow selection if not used
+                                if (!isUsed) {
+                                    selectedSensor = sensor
+                                    expanded = false
+                                }
+                            },
+                            // This visually grays out the whole menu item and prevents interaction
+                            enabled = !isUsed,
+                            contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                        )
+                    }
+                }
+            }
 
             error?.let {
                 Text(
@@ -102,15 +164,16 @@ fun EditPlantScreen(
                     error = null
                     viewModel.updatePlant(
                         plantId = plantId,
-                        name = name,
-                        type = type,
-                        description = description.takeIf { it.isNotBlank() }
+                        name = name.ifBlank { plant?.name ?: "" },
+                        type = type.ifBlank { plant?.type ?: "" },
+                        description = description.ifBlank { plant?.description }.takeIf { it?.isNotBlank() == true },
+                        sensorName = selectedSensor?.sensorName
                     )
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
-                enabled = !isLoading && name.isNotBlank() && type.isNotBlank()
+                enabled = !isLoading && (name.isNotBlank() || type.isNotBlank() || description.isNotBlank() || selectedSensor != null)
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(

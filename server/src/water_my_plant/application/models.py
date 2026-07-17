@@ -1,6 +1,8 @@
 from datetime import datetime
 from typing import Optional, List
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from pydantic import BaseModel, EmailStr, Field, ConfigDict, root_validator, validator, field_validator
+
+from water_my_plant.dal.models import SensorType
 
 
 # User models
@@ -46,11 +48,13 @@ class PlantUpdate(BaseModel):
     name: Optional[str] = None
     type: Optional[str] = None
     description: Optional[str] = None
+    sensor_name: str | None = None
 
 
 class PlantResponse(PlantBase):
     id: str
     owner_id: str
+    sensor_id: str | None
     created_at: datetime
     updated_at: datetime
 
@@ -97,4 +101,40 @@ class Token(BaseModel):
 
 
 class TokenData(BaseModel):
-    username: Optional[str] = None 
+    username: Optional[str] = None
+
+
+# Sensor models
+class MoistureData(BaseModel):
+    device_mac_address: str
+    sensor_id: int | str
+    moisture: int | str
+
+
+class SensorBase(BaseModel):
+    sensor_hardware_id: str
+    sensor_name: str
+    type: SensorType
+
+    @field_validator("type", mode='before')
+    @classmethod
+    def validate_sensor_type(cls, field_value: str):
+        return field_value.lower()
+
+
+class SensorRegister(SensorBase):
+    board_mac_address: str
+
+
+class BoardRegister(BaseModel):
+    mac_address: str
+    board_name: str
+
+
+class SensorResponse(SensorBase):
+    used_by: str | None = None
+
+
+class MoistureDataResponse(BaseModel):
+    sensor_id: str
+    moisture: list[float]

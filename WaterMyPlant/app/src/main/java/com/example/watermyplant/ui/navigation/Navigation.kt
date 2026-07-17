@@ -20,6 +20,7 @@ sealed class Screen(val route: String) {
         fun createRoute(plantId: String) = "plant_detail/$plantId"
     }
     object AddPlant : Screen("add_plant")
+    object RegisterSensor : Screen("register_sensor")
     object EditPlant : Screen("edit_plant/{plantId}") {
         fun createRoute(plantId: String) = "edit_plant/$plantId"
     }
@@ -73,6 +74,9 @@ fun AppNavigation(
                 },
                 onAddPlantClick = {
                     navController.navigate(Screen.AddPlant.route)
+                },
+                onRegisterSensorClick = {
+                    navController.navigate(Screen.RegisterSensor.route)
                 },
                 onLogout = {
                     navController.navigate(Screen.Login.route) {

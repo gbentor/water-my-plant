@@ -8,12 +8,17 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.Sensors
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.watermyplant.data.model.PlantWithLastWatered
@@ -31,6 +36,7 @@ import java.time.temporal.ChronoUnit
 fun PlantListScreen(
     onPlantClick: (String) -> Unit,
     onAddPlantClick: () -> Unit,
+    onRegisterSensorClick: () -> Unit,
     onLogout: () -> Unit,
     viewModel: PlantListViewModel = hiltViewModel()
 ) {
@@ -53,8 +59,27 @@ fun PlantListScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onAddPlantClick) {
-                Icon(Icons.Default.Add, contentDescription = "Add Plant")
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Add Sensor (Secondary Action)
+                FloatingActionButton(
+                    onClick = onRegisterSensorClick,
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                ) {
+                    Icon(Icons.Default.Sensors, contentDescription = "Add Sensor")
+                }
+
+                // Add Plant (Primary Action)
+                FloatingActionButton(
+                    onClick = onAddPlantClick,
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Add Plant")
+                }
             }
         }
     ) { padding ->
@@ -137,19 +162,22 @@ private fun PlantItem(
                 text = plantWithLastWatered.plant.type,
                 style = MaterialTheme.typography.bodyMedium
             )
-            if (!plantWithLastWatered.plant.description.isNullOrBlank()) {
+            if (plantWithLastWatered.currentMoisture != null) {
                 Text(
-                    text = plantWithLastWatered.plant.description,
-                    style = MaterialTheme.typography.bodySmall,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    text = buildAnnotatedString {
+                        append("Current Moisture: ")
+                        withStyle(style = SpanStyle(color = getMoistureColor(plantWithLastWatered.currentMoisture))) {
+                            append("${plantWithLastWatered.currentMoisture}")
+                        }
+                    },
+                    style = MaterialTheme.typography.bodySmall
                 )
             }
             val daysSinceLastWatered = plantWithLastWatered.lastWatered?.let { ChronoUnit.DAYS.between(it, Instant.now()) } ?: -1
             val daysText = if (daysSinceLastWatered >= 0) {
                 "($daysSinceLastWatered days ago)"
             } else {
-                "(Never)"
+                ""
             }
             Text(
                 text = "Last watered: ${DateUtils.formatDate(plantWithLastWatered.lastWatered)} $daysText",
@@ -158,6 +186,18 @@ private fun PlantItem(
             )
         }
     }
+}
+
+private fun getMoistureColor(moisture: Double): Color {
+    // Clamp moisture between 0 and 100
+    val normalizedMoisture = moisture.coerceIn(0.0, 100.0) / 100.0
+
+    // Interpolate between red (0) and green (100)
+    return androidx.compose.ui.graphics.lerp(
+        start = Color.Red,
+        stop = Color.Green,
+        fraction = normalizedMoisture.toFloat()
+    )
 }
 
 private fun formatDate(instant: Instant): String {

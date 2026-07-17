@@ -85,4 +85,32 @@ interface ApiService {
     suspend fun deleteWateringEvent(
         @Path("event_id") eventId: String
     ): Response<Unit>
+
+    @POST("sensors/register")
+    suspend fun registerSensorEvent(
+        @Body request: RegisterSensorRequest
+    ): Response<Unit>
+
+    @POST("sensors/boards/register")
+    suspend fun registerBoardEvent(
+        @Body request: RegisterBoardRequest
+    ): Response<Unit>
+
+    @GET("sensors/boards/all")
+    suspend fun getAllAvailableBoards():  Response<List<Board>>
+
+    @GET("sensors/")
+    suspend fun getAllAvailableSensors():  Response<List<Sensor>>
+
+    @GET("sensors/{sensor_id}")
+    suspend fun getSensorById(
+        @Path("sensor_id") sensorId: String
+    ): Response<Sensor>
+
+    @GET("sensors/moisture/{sensor_id}")
+    suspend fun getSensorMoistureData(
+        @Path("sensor_id") sensorId: String
+    ): Response<MoistureData>
+
+
 }

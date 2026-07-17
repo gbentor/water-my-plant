@@ -1,12 +1,15 @@
 package com.example.watermyplant.ui.screens.plants
-
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.watermyplant.data.model.MoistureData
 import com.example.watermyplant.data.model.Plant
+import com.example.watermyplant.data.model.Sensor
 import com.example.watermyplant.data.model.WateringEvent
 import com.example.watermyplant.data.model.WateringEventCreateRequest
 import com.example.watermyplant.data.model.WateringEventUpdateRequest
 import com.example.watermyplant.data.repository.PlantRepository
+import com.example.watermyplant.data.repository.SensorRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -25,7 +28,7 @@ sealed class PlantDetailUiState {
 
 @HiltViewModel
 class PlantDetailViewModel @Inject constructor(
-    private val plantRepository: PlantRepository
+    private val plantRepository: PlantRepository, private val sensorRepository: SensorRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<PlantDetailUiState>(PlantDetailUiState.Loading)
@@ -49,6 +52,44 @@ class PlantDetailViewModel @Inject constructor(
     private val _wateringEvents = MutableStateFlow<List<WateringEvent>>(emptyList())
     val wateringEvents: StateFlow<List<WateringEvent>> = _wateringEvents
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val sensor: StateFlow<Sensor?> = _plant
+        .flatMapLatest { plant ->
+            val sensorId = plant?.sensorId
+            if (sensorId == null) {
+                flowOf(null) // If no plant or no sensorId, emit null sensor
+            } else {
+                // Fetch the sensor. Since getSensorById returns a Flow<Result<Sensor>>,
+                // we map it to extract the actual Sensor object.
+                sensorRepository.getSensorById(sensorId).map { result ->
+                    result.getOrNull()
+                }
+            }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = null
+        )
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val moistureData: StateFlow<MoistureData?> = _plant
+        .flatMapLatest { plant ->
+            val sensorId = plant?.sensorId
+            if (sensorId == null) {
+                flowOf(null)
+            } else {
+                sensorRepository.getSensorMoistureData(sensorId).map { result ->
+                    result.getOrNull()
+                }
+            }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = null
+        )
+
     fun loadPlant(plantId: String) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -56,25 +97,12 @@ class PlantDetailViewModel @Inject constructor(
             try {
                 plantRepository.getPlantById(plantId).collect { result ->
                     result.fold(
-                        onSuccess = { plant ->
-                            _plant.value = plant
-                        },
-                        onFailure = { e ->
-                            _error.value = e.message ?: "Failed to load plant"
-                        }
+                        onSuccess = { _plant.value = it },
+                        onFailure = { _error.value = it.message ?: "Failed to load plant" }
                     )
                 }
-                // Fetch watering events after loading plant
-                plantRepository.getPlantWateringHistory(plantId).collect { result ->
-                    result.fold(
-                        onSuccess = { events ->
-                            _wateringEvents.value = events
-                        },
-                        onFailure = { e ->
-                            _error.value = e.message ?: "Failed to load watering events"
-                        }
-                    )
-                }
+
+                refreshWateringEvents(plantId)
             } catch (e: Exception) {
                 _error.value = e.message ?: "An unexpected error occurred"
             } finally {

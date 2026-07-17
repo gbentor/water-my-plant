@@ -18,6 +18,7 @@ import com.example.watermyplant.ui.screens.auth.AuthViewModel
 import com.example.watermyplant.ui.screens.auth.LoginScreen
 import com.example.watermyplant.ui.screens.auth.RegisterScreen
 import com.example.watermyplant.ui.screens.plants.AddPlantScreen
+import com.example.watermyplant.ui.screens.plants.RegisterSensorScreen
 import com.example.watermyplant.ui.screens.plants.EditPlantScreen
 import com.example.watermyplant.ui.screens.plants.DeletePlantScreen
 import com.example.watermyplant.ui.screens.plants.PlantDetailScreen
@@ -87,6 +88,9 @@ fun WaterMyPlantNavigation() {
                 onAddPlantClick = {
                     navController.navigate("addPlant")
                 },
+                onRegisterSensorClick = {
+                    navController.navigate("registerSensor")
+                },
                 onLogout = {
                     authViewModel.logout()
                     navController.navigate("login") {
@@ -113,6 +117,16 @@ fun WaterMyPlantNavigation() {
         composable("addPlant") {
             AddPlantScreen(
                 onPlantAdded = {
+                    navController.popBackStack()
+                },
+                onBackClick = {
+                    navController.popBackStack()
+                }
+            )
+        }
+        composable("registerSensor") {
+            RegisterSensorScreen(
+                onSensorRegistered = {
                     navController.popBackStack()
                 },
                 onBackClick = {

@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.watermyplant.data.model.Plant
 import com.example.watermyplant.data.model.PlantUpdateRequest
+import com.example.watermyplant.data.model.Sensor
 import com.example.watermyplant.data.repository.PlantRepository
+import com.example.watermyplant.data.repository.SensorRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,7 +15,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class EditPlantViewModel @Inject constructor(
-    private val plantRepository: PlantRepository
+    private val plantRepository: PlantRepository,
+    private val sensorRepository: SensorRepository
 ) : ViewModel() {
 
     private val _plant = MutableStateFlow<Plant?>(null)
@@ -27,6 +30,9 @@ class EditPlantViewModel @Inject constructor(
 
     private val _editSuccess = MutableStateFlow(false)
     val editSuccess: StateFlow<Boolean> = _editSuccess
+
+    private val _sensors = MutableStateFlow<List<Sensor>>(emptyList())
+    val sensors: StateFlow<List<Sensor>> = _sensors
 
     fun loadPlant(plantId: String) {
         viewModelScope.launch {
@@ -43,6 +49,20 @@ class EditPlantViewModel @Inject constructor(
                         }
                     )
                 }
+                sensorRepository.getAllSensors().collect { result ->
+                    result.fold(
+                        onSuccess = { sensorList ->
+                            // 1. Create your "Remove" item
+                            val removeAction = Sensor(sensorName = "Remove Sensor", sensorId = "remove_sensor", sensorType="remove")
+
+                            // 2. Create a new list combining the two
+                            _sensors.value = listOf(removeAction) + sensorList
+                        },
+                        onFailure = { e ->
+                            _error.value = e.message ?: "Failed to load sensors"
+                        }
+                    )
+                }
             } catch (e: Exception) {
                 _error.value = e.message ?: "An unexpected error occurred"
             } finally {
@@ -55,7 +75,8 @@ class EditPlantViewModel @Inject constructor(
         plantId: String,
         name: String,
         type: String,
-        description: String?
+        description: String?,
+        sensorName: String?
     ) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -64,7 +85,8 @@ class EditPlantViewModel @Inject constructor(
                 val request = PlantUpdateRequest(
                     name = name,
                     type = type,
-                    description = description
+                    description = description,
+                    sensorName = sensorName
                 )
                 plantRepository.updatePlant(plantId, request)
                     .collect { result ->
