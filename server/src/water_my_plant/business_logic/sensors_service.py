@@ -1,4 +1,3 @@
-import time
 from typing import Type
 from uuid import uuid4
 
@@ -11,8 +10,8 @@ from water_my_plant.dal.db_service import (get_all_sensors_for_user, get_single_
                                            get_single_board, register_board_in_db, get_all_boards_for_user)
 from water_my_plant.dal.models import Sensor, SensorType, Board
 
-MAX_WET_VALUE = 900
-MAX_DRY_VALUE = 4100
+MAX_WET_VALUE = 1000
+MAX_DRY_VALUE = 2500
 
 
 def register_sensor(db: Session, sensor_hardware_id: str, sensor_name: str, owner_id: str, sensor_type, mac_address: str) -> Sensor:
